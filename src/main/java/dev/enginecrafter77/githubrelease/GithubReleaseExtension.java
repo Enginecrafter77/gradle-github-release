@@ -1,4 +1,4 @@
-package dev.enginecrafter77.gradle.githubrelease;
+package dev.enginecrafter77.githubrelease;
 
 import groovy.lang.Closure;
 import lombok.Getter;
@@ -53,7 +53,7 @@ public class GithubReleaseExtension {
 		task.setGroup("github-release");
 
 		String endpoint = REAL_ENDPOINT;
-		@Nullable String mockServerProp = System.getProperty("dev.enginecrafter77.gradle.githubrelease.mockServer");
+		@Nullable String mockServerProp = System.getProperty("dev.enginecrafter77.githubrelease.mockServer");
 		if(Boolean.parseBoolean(mockServerProp))
 			endpoint = MOCK_ENDPOINT;
 

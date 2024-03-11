@@ -1,6 +1,6 @@
 plugins {
 	id 'java-library'
-	id 'dev.enginecrafter77.gradle.githubrelease'
+	id 'dev.enginecrafter77.githubrelease'
 }
 
 version = '1.0'

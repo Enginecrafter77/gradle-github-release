@@ -4,7 +4,7 @@ plugins {
     id 'maven-publish'
 }
 
-group "dev.enginecrafter77.gradle.githubrelease"
+group "dev.enginecrafter77.githubrelease"
 
 repositories {
     mavenCentral()
@@ -34,8 +34,8 @@ test {
 gradlePlugin {
     plugins {
         githubrelease {
-            id = 'dev.enginecrafter77.gradle.githubrelease'
-            implementationClass = 'dev.enginecrafter77.gradle.githubrelease.GithubReleaseGradlePlugin'
+            id = group
+            implementationClass = "${group}.GithubReleaseGradlePlugin"
         }
     }
 }

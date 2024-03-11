@@ -8,4 +8,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'github-release'
+rootProject.name = 'githubrelease'

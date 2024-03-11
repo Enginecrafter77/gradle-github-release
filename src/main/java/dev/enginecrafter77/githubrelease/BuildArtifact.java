@@ -1,4 +1,4 @@
-package dev.enginecrafter77.gradle.githubrelease;
+package dev.enginecrafter77.githubrelease;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

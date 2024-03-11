@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package dev.enginecrafter77.gradle.githubrelease;
+package dev.enginecrafter77.githubrelease;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;

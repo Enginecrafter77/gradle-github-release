@@ -1,4 +1,4 @@
-package dev.enginecrafter77.gradle.githubrelease;
+package dev.enginecrafter77.githubrelease;
 
 import org.eclipse.jgit.api.Git;
 import org.gradle.testkit.runner.GradleRunner;
@@ -40,7 +40,7 @@ public class GithubReleaseGradleTest {
 			runner.forwardOutput();
 			runner.withPluginClasspath();
 			runner.withProjectDir(projectDir);
-			runner.withArguments("--stacktrace", "-Ddev.enginecrafter77.gradle.githubrelease.mockServer=true", "githubRelease");
+			runner.withArguments("--stacktrace", "-Ddev.enginecrafter77.githubrelease.mockServer=true", "githubRelease");
 			runner.build();
 		});
 	}
