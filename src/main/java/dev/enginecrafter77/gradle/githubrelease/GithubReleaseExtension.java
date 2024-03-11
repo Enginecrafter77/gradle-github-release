@@ -4,10 +4,11 @@ import groovy.lang.Closure;
 import lombok.Getter;
 import lombok.Setter;
 import org.gradle.api.Project;
-import org.gradle.jvm.tasks.Jar;
+import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.util.ConfigureUtil;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -36,19 +37,14 @@ public class GithubReleaseExtension {
 		ConfigureUtil.configure(closure, this.artifacts);
 	}
 
-	@SuppressWarnings("deprecation")
 	private BuildArtifactContainer evaluateArtifacts(Project project)
 	{
 		if(this.artifacts != null)
 			return this.artifacts;
 
 		BuildArtifactContainer container = new BuildArtifactContainer();
-		Jar jarTask = (Jar)project.getTasks().findByName("jar");
-		Jar srcJarTask = (Jar)project.getTasks().findByName("sourcesJar");
-		if(jarTask != null)
-			container.addArtifact(jarTask.getArchivePath(), "application/java-archive", jarTask, metadata -> {});
-		if(srcJarTask != null)
-			container.addArtifact(srcJarTask.getArchivePath(), "application/java-archive", jarTask, metadata -> {});
+		Optional.ofNullable(project.getTasks().findByName("jar")).map(Jar.class::cast).ifPresent(container::fromJar);
+		Optional.ofNullable(project.getTasks().findByName("sourcesJar")).map(Jar.class::cast).ifPresent(container::fromJar);
 		return container;
 	}
 

@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Getter
 public class BuildArtifactContainer {
@@ -23,7 +24,7 @@ public class BuildArtifactContainer {
 		this.artifacts = new ArrayList<BuildArtifact>();
 	}
 
-	public void addArtifact(File file, @Nullable String type, @Nullable Object buildDependency, Action<? super BuildArtifactMetadata> configureAction)
+	public void addArtifact(Supplier<File> file, @Nullable String type, @Nullable Object buildDependency, Action<? super BuildArtifactMetadata> configureAction)
 	{
 		this.artifacts.add(new BuildArtifact(configureAction, file, type, buildDependency));
 	}
@@ -31,7 +32,7 @@ public class BuildArtifactContainer {
 	@SuppressWarnings("deprecation")
 	public void fromJar(Jar task, Action<? super BuildArtifactMetadata> configureAction)
 	{
-		this.addArtifact(task.getArchivePath(), "application/java-archive", task, configureAction);
+		this.addArtifact(task::getArchivePath, "application/java-archive", task, configureAction);
 	}
 
 	public void fromJar(Jar task, Closure<? super BuildArtifactMetadata> closure)
@@ -47,7 +48,7 @@ public class BuildArtifactContainer {
 	@SuppressWarnings("deprecation")
 	public void fromZip(Zip task, Action<? super BuildArtifactMetadata> configureAction)
 	{
-		this.addArtifact(task.getArchivePath(), "application/zip", task, configureAction);
+		this.addArtifact(task::getArchivePath, "application/zip", task, configureAction);
 	}
 
 	public void fromZip(Zip task, Closure<? super BuildArtifactMetadata> closure)
@@ -62,7 +63,7 @@ public class BuildArtifactContainer {
 
 	public void fromTask(Object task, File file, Action<? super BuildArtifactMetadata> configureAction)
 	{
-		this.addArtifact(file, null, task, configureAction);
+		this.addArtifact(() -> file, null, task, configureAction);
 	}
 
 	public void fromTask(Object task, File file, Closure<? super BuildArtifactMetadata> closure)
@@ -77,7 +78,7 @@ public class BuildArtifactContainer {
 
 	public void fromFile(File file, Action<? super BuildArtifactMetadata> configureAction)
 	{
-		this.addArtifact(file, null, null, configureAction);
+		this.addArtifact(() -> file, null, null, configureAction);
 	}
 
 	public void fromFile(File file, Closure<? super BuildArtifactMetadata> closure)

@@ -6,13 +6,14 @@ import org.gradle.api.Action;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.function.Supplier;
 
 @AllArgsConstructor
 public class BuildArtifact {
 	private final Action<? super BuildArtifactMetadata> metadataConfig;
 
 	@Getter
-	private final File artifactFile;
+	private final Supplier<File> artifactFileProvider;
 
 	@Getter
 	@Nullable

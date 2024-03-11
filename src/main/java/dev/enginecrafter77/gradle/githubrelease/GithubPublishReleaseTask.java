@@ -122,7 +122,7 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		{
 			artifact.configureMetadata(metadata);
 
-			File file = artifact.getArtifactFile();
+			File file = artifact.getArtifactFileProvider().get();
 			String name = Optional.ofNullable(metadata.getName()).orElseGet(file::getName);
 			@Nullable String label = metadata.getLabel();
 
