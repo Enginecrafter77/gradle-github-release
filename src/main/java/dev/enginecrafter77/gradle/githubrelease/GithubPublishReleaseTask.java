@@ -94,22 +94,23 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		throw new UnsupportedOperationException("releaseData is neither GithubReleaseData instance nor Closure!");
 	}
 
+	@SuppressWarnings("deprecation")
 	private BuildArtifact resolveArtifact(Object artifact)
 	{
 		if(artifact instanceof Jar)
 		{
 			Jar task = (Jar)artifact;
-			return new BuildArtifact(task.getArchiveFile().get().getAsFile(), "application/java-archive", task);
+			return new BuildArtifact(task.getArchivePath(), "application/java-archive", task);
 		}
 		if(artifact instanceof Zip)
 		{
 			Zip task = (Zip)artifact;
-			return new BuildArtifact(task.getArchiveFile().get().getAsFile(), "application/zip", task);
+			return new BuildArtifact(task.getArchivePath(), "application/zip", task);
 		}
 		else if(artifact instanceof AbstractArchiveTask)
 		{
 			AbstractArchiveTask task = (AbstractArchiveTask)artifact;
-			return new BuildArtifact(task.getArchiveFile().get().getAsFile(), null, task);
+			return new BuildArtifact(task.getArchivePath(), null, task);
 		}
 		else if(artifact instanceof File)
 		{
