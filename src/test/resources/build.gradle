@@ -1,0 +1,4 @@
+plugins {
+	id 'java-library'
+	id 'dev.enginecrafter77.gradle.githubrelease'
+}

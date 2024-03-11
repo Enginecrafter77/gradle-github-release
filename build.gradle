@@ -1,0 +1,58 @@
+plugins {
+    id 'fr.brouillard.oss.gradle.jgitver'
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+}
+
+group "dev.enginecrafter77.gradle.githubrelease"
+
+repositories {
+    mavenCentral()
+    google()
+
+    maven { url "https://maven.enginecrafter77.dev/general" }
+}
+
+dependencies {
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.8.0.202311291450-r'
+    implementation 'org.kohsuke:github-api:1.315'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    gradleApi()
+
+    testImplementation gradleTestKit()
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+gradlePlugin {
+    plugins {
+        githubrelease {
+            id = 'dev.enginecrafter77.gradle.githubrelease'
+            implementationClass = 'dev.enginecrafter77.gradle.githubrelease.GithubReleaseGradlePlugin'
+        }
+    }
+}
+
+jgitver {
+    nonQualifierBranches "main"
+    useDirty true
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
+	withSourcesJar()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'EC77Maven'
+            url = 'https://maven.enginecrafter77.dev/general'
+            credentials {
+                username System.getenv("EC77MAVEN_USERNAME") ?: ""
+                password System.getenv("EC77MAVEN_PASSWORD") ?: ""
+            }
+        }
+    }
+}
