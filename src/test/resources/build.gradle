@@ -3,8 +3,14 @@ plugins {
 	id 'dev.enginecrafter77.gradle.githubrelease'
 }
 
+def _version = '1.0'
+
 java {
 	withSourcesJar()
+}
+
+afterEvaluate {
+	_version = '2.3'
 }
 
 github {
@@ -13,7 +19,7 @@ github {
 	token = "some_token"
 	artifacts {
 		fromJar(jar) {
-			name = "just-a.jar"
+			name = "version-${_version}.jar"
 		}
 		fromJar sourcesJar
 	}

@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -116,11 +117,15 @@ public class GithubPublishReleaseTask extends DefaultTask {
 				.draft(releaseData.draft)
 				.create();
 
+		BuildArtifactMetadata metadata = new BuildArtifactMetadata();
 		for(BuildArtifact artifact : artifacts)
 		{
+			artifact.configureMetadata(metadata);
+
 			File file = artifact.getArtifactFile();
-			String name = artifact.getName();
-			@Nullable String label = artifact.getLabel();
+			String name = Optional.ofNullable(metadata.getName()).orElseGet(file::getName);
+			@Nullable String label = metadata.getLabel();
+
 			try(InputStream input = Files.newInputStream(file.toPath()))
 			{
 				@Nullable String mimeType = artifact.getContentType();

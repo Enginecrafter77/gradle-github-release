@@ -23,18 +23,9 @@ public class BuildArtifactContainer {
 		this.artifacts = new ArrayList<BuildArtifact>();
 	}
 
-	private BuildArtifactMetadata configureMetadata(Action<? super BuildArtifactMetadata> configureAction)
-	{
-		BuildArtifactMetadata metadata = new BuildArtifactMetadata();
-		configureAction.execute(metadata);
-		return metadata;
-	}
-
 	public void addArtifact(File file, @Nullable String type, @Nullable Object buildDependency, Action<? super BuildArtifactMetadata> configureAction)
 	{
-		BuildArtifactMetadata metadata = this.configureMetadata(configureAction);
-		BuildArtifact artifact = new BuildArtifact(metadata, file, type, buildDependency);
-		this.artifacts.add(artifact);
+		this.artifacts.add(new BuildArtifact(configureAction, file, type, buildDependency));
 	}
 
 	@SuppressWarnings("deprecation")

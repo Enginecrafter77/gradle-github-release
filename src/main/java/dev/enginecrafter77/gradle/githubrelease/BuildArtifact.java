@@ -1,43 +1,29 @@
 package dev.enginecrafter77.gradle.githubrelease;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.gradle.api.Action;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.Optional;
 
+@AllArgsConstructor
 public class BuildArtifact {
-	private final BuildArtifactMetadata metadata;
+	private final Action<? super BuildArtifactMetadata> metadataConfig;
 
 	@Getter
 	private final File artifactFile;
 
 	@Getter
 	@Nullable
-	private final Object buildDependency;
+	private final String contentType;
 
 	@Getter
 	@Nullable
-	private final String contentType;
+	private final Object buildDependency;
 
-	public BuildArtifact(BuildArtifactMetadata metadata, File artifactFile, @Nullable String contentType, @Nullable Object buildDependency)
+	public void configureMetadata(BuildArtifactMetadata metadata)
 	{
-		this.artifactFile = artifactFile;
-		this.contentType = contentType;
-		this.buildDependency = buildDependency;
-		this.metadata = metadata;
-	}
-
-	@Nonnull
-	public String getName()
-	{
-		return Optional.ofNullable(this.metadata.getName()).orElseGet(this.artifactFile::getName);
-	}
-
-	@Nullable
-	public String getLabel()
-	{
-		return this.metadata.getLabel();
+		this.metadataConfig.execute(metadata);
 	}
 }
