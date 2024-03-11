@@ -21,18 +21,10 @@ package dev.enginecrafter77.gradle.githubrelease;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.jvm.tasks.Jar;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GithubReleaseGradlePlugin implements Plugin<Project> {
-	private static final String REAL_ENDPOINT = "https://api.github.com";
-	private static final String MOCK_ENDPOINT = "http://localhost:5000"; // A simple flask mock
-
 	@Override
 	public void apply(@Nonnull Project project)
 	{
@@ -46,28 +38,8 @@ public class GithubReleaseGradlePlugin implements Plugin<Project> {
 
 	protected void configureDefaultReleaseTask(GithubPublishReleaseTask task)
 	{
-		task.setGroup("github-release");
-
-		String endpoint = REAL_ENDPOINT;
-		@Nullable String mockServerProp = System.getProperty("dev.enginecrafter77.gradle.githubrelease.mockServer");
-		if(Boolean.parseBoolean(mockServerProp))
-			endpoint = MOCK_ENDPOINT;
-
 		Project project = task.getProject();
 		GithubReleaseExtension extension = project.getExtensions().getByType(GithubReleaseExtension.class);
-
-		Jar jarTask = (Jar)project.getTasks().findByName("jar");
-		Jar srcJarTask = (Jar)project.getTasks().findByName("sourcesJar");
-
-		task.setEndpointUrl(endpoint);
-		task.setRepositoryUrl(extension.getRepository());
-		task.setUsername(extension.getUsername());
-		task.setToken(extension.getToken());
-		task.setArtifacts(Stream.of(jarTask, srcJarTask).filter(Objects::nonNull).collect(Collectors.toList()));
-
-		if(extension.releaseData != null)
-			task.setReleaseData(extension.releaseData);
-		else
-			task.release(GithubReleaseData::useLatestTag);
+		extension.configureTask(task);
 	}
 }

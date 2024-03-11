@@ -135,7 +135,7 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		Collection<BuildArtifact> artifacts = this.artifacts.stream().map(this::resolveArtifact).collect(Collectors.toList());
 		GithubReleaseData releaseData = this.evaluateReleaseData();
 
-		GitHub github = (new GitHubBuilder()).withEndpoint(this.endpointUrl).build();
+		GitHub github = (new GitHubBuilder()).withEndpoint(this.endpointUrl).withOAuthToken(this.username, this.token).build();
 		GHRepository repository = github.getRepository(this.getRepositoryName());
 		GHRelease release = repository.createRelease(releaseData.tag)
 				.name(releaseData.name)
