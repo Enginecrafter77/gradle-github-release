@@ -5,17 +5,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.bundling.AbstractArchiveTask;
-import org.gradle.api.tasks.bundling.Jar;
-import org.gradle.api.tasks.bundling.Zip;
 import org.gradle.util.ConfigureUtil;
-import org.kohsuke.github.GHRelease;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,7 +42,7 @@ public class GithubPublishReleaseTask extends DefaultTask {
 	public Object releaseData;
 
 	@Input
-	private Collection<Object> artifacts;
+	private BuildArtifactContainer artifacts;
 
 	@Nonnull
 	private String getRepositoryName()
@@ -60,10 +53,24 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		return matcher.group(1);
 	}
 
-	public void setArtifacts(Collection<Object> artifacts)
+	public void setArtifacts(BuildArtifactContainer artifacts)
 	{
-		this.setDependsOn(artifacts.stream().map(this::resolveArtifact).map(BuildArtifact::getBuildTask).filter(Objects::nonNull).collect(Collectors.toList()));
 		this.artifacts = artifacts;
+		this.reloadDependencies();
+	}
+
+	public void artifacts(Closure<? super BuildArtifactContainer> closure)
+	{
+		this.artifacts = new BuildArtifactContainer();
+		closure.setResolveStrategy(Closure.DELEGATE_FIRST);
+		closure.setDelegate(this.artifacts);
+		closure.call();
+		this.reloadDependencies();
+	}
+
+	private void reloadDependencies()
+	{
+		this.setDependsOn(this.artifacts.getArtifacts().stream().map(BuildArtifact::getBuildDependency).filter(Objects::nonNull).collect(Collectors.toList()));
 	}
 
 	public void release(Closure<? super GithubReleaseData> closure)
@@ -94,46 +101,10 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		throw new UnsupportedOperationException("releaseData is neither GithubReleaseData instance nor Closure!");
 	}
 
-	@SuppressWarnings("deprecation")
-	private BuildArtifact resolveArtifact(Object artifact)
-	{
-		if(artifact instanceof Jar)
-		{
-			Jar task = (Jar)artifact;
-			return new BuildArtifact(task.getArchivePath(), "application/java-archive", task);
-		}
-		if(artifact instanceof Zip)
-		{
-			Zip task = (Zip)artifact;
-			return new BuildArtifact(task.getArchivePath(), "application/zip", task);
-		}
-		else if(artifact instanceof AbstractArchiveTask)
-		{
-			AbstractArchiveTask task = (AbstractArchiveTask)artifact;
-			return new BuildArtifact(task.getArchivePath(), null, task);
-		}
-		else if(artifact instanceof File)
-		{
-			return new BuildArtifact((File)artifact, null, null);
-		}
-		else if(artifact instanceof FileSystemLocation)
-		{
-			return new BuildArtifact(((FileSystemLocation)artifact).getAsFile(), null, null);
-		}
-		else if(artifact instanceof String)
-		{
-			return new BuildArtifact(new File((String)artifact), null, null);
-		}
-		else
-		{
-			throw new IllegalArgumentException("artifact must be either a Task reference, String, File or FileSystemLocation instance! Provided: " + artifact.getClass().getName());
-		}
-	}
-
 	@TaskAction
 	public void run() throws Exception
 	{
-		Collection<BuildArtifact> artifacts = this.artifacts.stream().map(this::resolveArtifact).collect(Collectors.toList());
+		Collection<BuildArtifact> artifacts = this.artifacts.getArtifacts();
 		GithubReleaseData releaseData = this.evaluateReleaseData();
 
 		GitHub github = (new GitHubBuilder()).withEndpoint(this.endpointUrl).withOAuthToken(this.username, this.token).build();
@@ -147,8 +118,9 @@ public class GithubPublishReleaseTask extends DefaultTask {
 
 		for(BuildArtifact artifact : artifacts)
 		{
-			File file = artifact.getOutput();
-			String name = file.getName();
+			File file = artifact.getArtifactFile();
+			String name = artifact.getName();
+			@Nullable String label = artifact.getLabel();
 			try(InputStream input = Files.newInputStream(file.toPath()))
 			{
 				@Nullable String mimeType = artifact.getContentType();
@@ -156,7 +128,9 @@ public class GithubPublishReleaseTask extends DefaultTask {
 					mimeType = Files.probeContentType(file.toPath());
 				if(mimeType == null)
 					mimeType = "application/octet-stream";
-				release.uploadAsset(name, input, mimeType);
+				GHAsset asset = release.uploadAsset(name, input, mimeType);
+				if(label != null)
+					asset.setLabel(label);
 			}
 		}
 	}

@@ -11,7 +11,12 @@ github {
 	repository = "https://github.com/user/repo"
 	username = "user"
 	token = "some_token"
-	artifacts = [jar, sourcesJar]
+	artifacts {
+		fromJar(jar) {
+			name = "just-a.jar"
+		}
+		fromJar sourcesJar
+	}
 	release {
 		tag = "vX.Y.Z"
 		name = "test"

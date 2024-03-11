@@ -8,10 +8,6 @@ import org.gradle.jvm.tasks.Jar;
 import org.gradle.util.ConfigureUtil;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -24,7 +20,7 @@ public class GithubReleaseExtension {
 	public String token;
 
 	@Nullable
-	public Collection<Object> artifacts;
+	public BuildArtifactContainer artifacts;
 
 	@Nullable
 	public Object releaseData;
@@ -34,14 +30,26 @@ public class GithubReleaseExtension {
 		this.releaseData = ConfigureUtil.configureUsing(closure);
 	}
 
-	private Collection<Object> evaluateArtifacts(Project project)
+	public void artifacts(Closure<? super BuildArtifactContainer> closure)
+	{
+		this.artifacts = new BuildArtifactContainer();
+		ConfigureUtil.configure(closure, this.artifacts);
+	}
+
+	@SuppressWarnings("deprecation")
+	private BuildArtifactContainer evaluateArtifacts(Project project)
 	{
 		if(this.artifacts != null)
 			return this.artifacts;
 
+		BuildArtifactContainer container = new BuildArtifactContainer();
 		Jar jarTask = (Jar)project.getTasks().findByName("jar");
 		Jar srcJarTask = (Jar)project.getTasks().findByName("sourcesJar");
-		return Stream.of(jarTask, srcJarTask).filter(Objects::nonNull).collect(Collectors.toList());
+		if(jarTask != null)
+			container.addArtifact(jarTask.getArchivePath(), "application/java-archive", jarTask, metadata -> {});
+		if(srcJarTask != null)
+			container.addArtifact(srcJarTask.getArchivePath(), "application/java-archive", jarTask, metadata -> {});
+		return container;
 	}
 
 	public void configureTask(GithubPublishReleaseTask task)
@@ -54,7 +62,7 @@ public class GithubReleaseExtension {
 			endpoint = MOCK_ENDPOINT;
 
 		Project project = task.getProject();
-		Collection<Object> artifacts = this.evaluateArtifacts(project);
+		BuildArtifactContainer artifacts = this.evaluateArtifacts(project);
 
 		task.setEndpointUrl(endpoint);
 		task.setRepositoryUrl(this.getRepository());
