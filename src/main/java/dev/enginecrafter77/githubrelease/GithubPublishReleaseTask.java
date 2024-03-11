@@ -109,10 +109,11 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		GitHub github = (new GitHubBuilder()).withEndpoint(this.endpointUrl).withOAuthToken(this.token).build();
 		GHRepository repository = github.getRepository(this.getRepositoryName());
 
+		//Github API requires the message to use CRLF line endings.
 		//noinspection deprecation
 		GHRelease release = repository.createRelease(releaseData.tag)
 				.name(StringEscapeUtils.escapeJson(releaseData.name))
-				.body(StringEscapeUtils.escapeJson(releaseData.message))
+				.body(StringEscapeUtils.escapeJson(releaseData.message.replace("\n", "\r\n")))
 				.prerelease(releaseData.preRelease)
 				.draft(releaseData.draft)
 				.create();
