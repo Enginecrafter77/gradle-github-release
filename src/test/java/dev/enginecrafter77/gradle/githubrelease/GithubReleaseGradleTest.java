@@ -1,7 +1,8 @@
 package dev.enginecrafter77.gradle.githubrelease;
 
-import org.gradle.testkit.runner.BuildResult;
+import org.eclipse.jgit.api.Git;
 import org.gradle.testkit.runner.GradleRunner;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -20,26 +21,28 @@ public class GithubReleaseGradleTest {
 		return new File(projectDir, "build.gradle");
 	}
 
-	private File getSettingsFile() {
-		return new File(projectDir, "settings.gradle");
-	}
-
 	@Test
-	public void testBasic() throws IOException
+	public void testBasic() throws Exception
 	{
 		copyResourceToFile("build.gradle", getBuildFile());
-		copyResourceToFile("settings.gradle", getSettingsFile());
+
+		try(Git git = Git.init().setDirectory(this.projectDir).call())
+		{
+			git.add().addFilepattern(".").call();
+			git.commit().setMessage("Initial commit").call();
+			git.tag().setAnnotated(true).setName("v0.0.1").setMessage("R-0.0.1").call();
+		}
 
 		// Run the build
-		GradleRunner runner = GradleRunner.create();
-		runner.withEnvironment(System.getenv());
-		runner.forwardOutput();
-		runner.withPluginClasspath();
-		runner.withProjectDir(projectDir);
-		runner.withArguments("githubRelease");
-		BuildResult result = runner.build();
-
-		//Assertions.assertTrue(result.getOutput().contains("4.2.0/420"));
+		Assertions.assertDoesNotThrow(() -> {
+			GradleRunner runner = GradleRunner.create();
+			runner.withEnvironment(System.getenv());
+			runner.forwardOutput();
+			runner.withPluginClasspath();
+			runner.withProjectDir(projectDir);
+			runner.withArguments("-Ddev.enginecrafter77.gradle.githubrelease.mockServer=true", "githubRelease");
+			runner.build();
+		});
 	}
 
 	private void copyResourceToFile(String resource, File dest) throws IOException

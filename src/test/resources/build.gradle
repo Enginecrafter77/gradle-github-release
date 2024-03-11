@@ -2,3 +2,20 @@ plugins {
 	id 'java-library'
 	id 'dev.enginecrafter77.gradle.githubrelease'
 }
+
+java {
+	withSourcesJar()
+}
+
+github {
+	repository = "https://github.com/user/repo"
+	username = "user"
+	token = "some_token"
+	release {
+		tag = "vX.Y.Z"
+		name = "test"
+		message = "test message"
+		draft = true
+		preRelease = false
+	}
+}
