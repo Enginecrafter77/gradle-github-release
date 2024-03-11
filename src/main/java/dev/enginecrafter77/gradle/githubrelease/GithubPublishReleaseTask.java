@@ -3,6 +3,7 @@ package dev.enginecrafter77.gradle.githubrelease;
 import groovy.lang.Closure;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
@@ -110,9 +111,11 @@ public class GithubPublishReleaseTask extends DefaultTask {
 
 		GitHub github = (new GitHubBuilder()).withEndpoint(this.endpointUrl).withOAuthToken(this.username, this.token).build();
 		GHRepository repository = github.getRepository(this.getRepositoryName());
+
+		//noinspection deprecation
 		GHRelease release = repository.createRelease(releaseData.tag)
-				.name(releaseData.name)
-				.body(releaseData.message)
+				.name(StringEscapeUtils.escapeJson(releaseData.name))
+				.body(StringEscapeUtils.escapeJson(releaseData.message))
 				.prerelease(releaseData.preRelease)
 				.draft(releaseData.draft)
 				.create();
