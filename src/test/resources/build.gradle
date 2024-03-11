@@ -15,7 +15,6 @@ afterEvaluate {
 
 github {
 	repository = "https://github.com/user/repo"
-	username = "user"
 	token = "some_token"
 	artifacts {
 		fromJar(jar) {

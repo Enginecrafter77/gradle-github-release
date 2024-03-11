@@ -35,9 +35,6 @@ public class GithubPublishReleaseTask extends DefaultTask {
 	public String repositoryUrl;
 
 	@Input
-	public String username;
-
-	@Input
 	public String token;
 
 	@Input
@@ -109,7 +106,7 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		Collection<BuildArtifact> artifacts = this.artifacts.getArtifacts();
 		GithubReleaseData releaseData = this.evaluateReleaseData();
 
-		GitHub github = (new GitHubBuilder()).withEndpoint(this.endpointUrl).withOAuthToken(this.username, this.token).build();
+		GitHub github = (new GitHubBuilder()).withEndpoint(this.endpointUrl).withOAuthToken(this.token).build();
 		GHRepository repository = github.getRepository(this.getRepositoryName());
 
 		//noinspection deprecation

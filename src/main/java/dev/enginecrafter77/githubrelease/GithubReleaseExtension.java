@@ -17,7 +17,6 @@ public class GithubReleaseExtension {
 	private static final String MOCK_ENDPOINT = "http://localhost:5000"; // A simple flask mock
 
 	public String repository;
-	public String username;
 	public String token;
 
 	@Nullable
@@ -62,7 +61,6 @@ public class GithubReleaseExtension {
 
 		task.setEndpointUrl(endpoint);
 		task.setRepositoryUrl(this.getRepository());
-		task.setUsername(this.getUsername());
 		task.setToken(this.getToken());
 		task.setArtifacts(artifacts);
 
