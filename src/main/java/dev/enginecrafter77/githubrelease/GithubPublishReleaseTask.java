@@ -120,6 +120,10 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		BuildArtifactMetadata metadata = new BuildArtifactMetadata();
 		for(BuildArtifact artifact : artifacts)
 		{
+			// Reset to default values
+			metadata.label = null;
+			metadata.name = null;
+
 			artifact.configureMetadata(metadata);
 
 			File file = artifact.getArtifactFileProvider().get();
