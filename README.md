@@ -20,7 +20,7 @@ pluginManagement {
 		}
 	}
 	plugins {
-		id "dev.enginecrafter77.githubrelease" version "&lt;version&gt;"
+		id "dev.enginecrafter77.githubrelease" version "<version>"
 	}
 }
 ```
@@ -93,14 +93,14 @@ In such cases, artifacts offers a few more options.
 In this example, we can include any JAR built by Jar type tasks.
 ```groovy
 artifacts {
-	fromJar &lt;jar-task&gt;
+	fromJar <jar-task>
 }
 ```
 
 Similarly, we can include a zip file built by a Zip type task.
 ```groovy
 artifacts {
-	fromZip &lt;jar-task&gt;
+	fromZip <jar-task>
 }
 ```
 
@@ -108,7 +108,7 @@ This notation allows you to include any file specified
 by the file argument built by task specified by the task argument.
 ```groovy
 artifacts {
-	fromTask &lt;task&gt;, &lt;file&gt;
+	fromTask <task>, <file>
 }
 ```
 
@@ -116,7 +116,7 @@ This option allows you to include any file which is not built by a task.
 The use cases for this method are limited, but it was included nonetheless.
 ```groovy
 artifacts {
-	fromFile &lt;file&gt;
+	fromFile <file>
 }
 ```
 
