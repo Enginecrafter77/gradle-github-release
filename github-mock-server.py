@@ -296,3 +296,6 @@ def e_asset_get(user, repo, rel_id, asset_id):
     rel = release_map[rel_id]
     asset = rel.assets[asset_id]
     return asset.serialize()
+
+if __name__ == "__main__":
+	app.run(debug=False)
