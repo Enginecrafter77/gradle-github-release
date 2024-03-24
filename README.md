@@ -159,7 +159,7 @@ The server will be running on `http://localhost:5000`, which is what the plugin 
 
 To force the plugin to use the mock server, runi t as such.
 ```bash
-./gradlew -Ddev.enginecrafter77.githubrelease.mockServer=true githubRelease
+./gradlew -Ddev.enginecrafter77.githubrelease.endpoint=http://localhost:5000 githubRelease
 ```
 
 It is recommended to set token to a random string
