@@ -164,3 +164,24 @@ To force the plugin to use the mock server, runi t as such.
 
 It is recommended to set token to a random string
 such as "00000" to avoid accidentally using the real github api.
+
+## Custom tasks
+If desired, one can also register a custom GithubReleaseExtension task.
+
+```groovy
+tasks.register("task-name", dev.enginecrafter77.githubrelease.GithubPublishReleaseTask.class) {
+	endpointUrl = "https://api.github.com" // required
+	repositoryUrl = "https://github.com/user/repo" // required
+	token = "xxxxxxxx" // required
+	release {
+		tag = "vX.Y.Z" // The tag to create the release on
+		name = "Release XYZ" // The release title
+		message = "Release message\n\nA new line example" // The release body
+		draft = false
+		preRelease = false
+	}
+	artifacts {
+		fromJar jar
+	}
+}
+```
