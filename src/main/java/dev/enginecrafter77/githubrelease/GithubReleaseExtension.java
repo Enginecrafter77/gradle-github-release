@@ -1,6 +1,7 @@
 package dev.enginecrafter77.githubrelease;
 
 import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
 import lombok.Getter;
 import lombok.Setter;
 import org.gradle.api.Project;
@@ -25,12 +26,12 @@ public class GithubReleaseExtension {
 	@Nullable
 	public Object releaseData;
 
-	public void release(Closure<? super GithubReleaseData> closure)
+	public void release(@DelegatesTo(value = GithubReleaseData.class, strategy = Closure.DELEGATE_FIRST) Closure<? super GithubReleaseData> closure)
 	{
 		this.releaseData = ConfigureUtil.configureUsing(closure);
 	}
 
-	public void artifacts(Closure<? super BuildArtifactContainer> closure)
+	public void artifacts(@DelegatesTo(value = BuildArtifactContainer.class, strategy = Closure.DELEGATE_FIRST) Closure<? super BuildArtifactContainer> closure)
 	{
 		this.artifacts = new BuildArtifactContainer();
 		ConfigureUtil.configure(closure, this.artifacts);

@@ -1,6 +1,7 @@
 package dev.enginecrafter77.githubrelease;
 
 import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -58,7 +59,7 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		this.reloadDependencies();
 	}
 
-	public void artifacts(Closure<? super BuildArtifactContainer> closure)
+	public void artifacts(@DelegatesTo(value = BuildArtifactContainer.class, strategy = Closure.DELEGATE_FIRST) Closure<? super BuildArtifactContainer> closure)
 	{
 		this.artifacts = new BuildArtifactContainer();
 		closure.setResolveStrategy(Closure.DELEGATE_FIRST);
@@ -72,7 +73,7 @@ public class GithubPublishReleaseTask extends DefaultTask {
 		this.setDependsOn(this.artifacts.getArtifacts().stream().map(BuildArtifact::getBuildDependency).filter(Objects::nonNull).collect(Collectors.toList()));
 	}
 
-	public void release(Closure<? super GithubReleaseData> closure)
+	public void release(@DelegatesTo(value = GithubReleaseData.class, strategy = Closure.DELEGATE_FIRST) Closure<? super GithubReleaseData> closure)
 	{
 		this.release(ConfigureUtil.configureUsing(closure));
 	}

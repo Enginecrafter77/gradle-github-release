@@ -1,6 +1,7 @@
 package dev.enginecrafter77.githubrelease;
 
 import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
 import lombok.Getter;
 import org.gradle.api.Action;
 import org.gradle.api.file.FileSystemLocation;
@@ -35,7 +36,7 @@ public class BuildArtifactContainer {
 		this.addArtifact(task::getArchivePath, "application/java-archive", task, configureAction);
 	}
 
-	public void fromJar(Jar task, Closure<? super BuildArtifactMetadata> closure)
+	public void fromJar(Jar task, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST) Closure<? super BuildArtifactMetadata> closure)
 	{
 		this.fromJar(task, ConfigureUtil.configureUsing(closure));
 	}
@@ -51,7 +52,7 @@ public class BuildArtifactContainer {
 		this.addArtifact(task::getArchivePath, "application/zip", task, configureAction);
 	}
 
-	public void fromZip(Zip task, Closure<? super BuildArtifactMetadata> closure)
+	public void fromZip(Zip task, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
 	{
 		this.fromZip(task, ConfigureUtil.configureUsing(closure));
 	}
@@ -66,7 +67,7 @@ public class BuildArtifactContainer {
 		this.addArtifact(() -> file, null, task, configureAction);
 	}
 
-	public void fromTask(Object task, File file, Closure<? super BuildArtifactMetadata> closure)
+	public void fromTask(Object task, File file, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
 	{
 		this.fromTask(task, file, ConfigureUtil.configureUsing(closure));
 	}
@@ -81,7 +82,7 @@ public class BuildArtifactContainer {
 		this.addArtifact(() -> file, null, null, configureAction);
 	}
 
-	public void fromFile(File file, Closure<? super BuildArtifactMetadata> closure)
+	public void fromFile(File file, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
 	{
 		this.fromFile(file, ConfigureUtil.configureUsing(closure));
 	}
@@ -96,7 +97,7 @@ public class BuildArtifactContainer {
 		this.fromFile(file.getAsFile(), configureAction);
 	}
 
-	public void fromFile(FileSystemLocation file, Closure<? super BuildArtifactMetadata> closure)
+	public void fromFile(FileSystemLocation file, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
 	{
 		this.fromFile(file.getAsFile(), closure);
 	}
@@ -111,7 +112,7 @@ public class BuildArtifactContainer {
 		this.fromFile(new File(file), action);
 	}
 
-	public void fromFile(String file, Closure<? super BuildArtifactMetadata> closure)
+	public void fromFile(String file, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
 	{
 		this.fromFile(new File(file), closure);
 	}
