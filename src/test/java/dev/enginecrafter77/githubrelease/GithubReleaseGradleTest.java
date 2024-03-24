@@ -40,7 +40,7 @@ public class GithubReleaseGradleTest {
 			runner.forwardOutput();
 			runner.withPluginClasspath();
 			runner.withProjectDir(projectDir);
-			runner.withArguments("--stacktrace", "-Ddev.enginecrafter77.githubrelease.mockServer=true", "githubRelease");
+			runner.withArguments("--stacktrace", "-Ddev.enginecrafter77.githubrelease.endpoint=http://localhost:5000", "githubRelease");
 			runner.build();
 		});
 	}

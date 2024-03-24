@@ -15,7 +15,6 @@ import java.util.Optional;
 @Setter
 public class GithubReleaseExtension {
 	private static final String REAL_ENDPOINT = "https://api.github.com";
-	private static final String MOCK_ENDPOINT = "http://localhost:5000"; // A simple flask mock
 
 	public String repository;
 	public String token;
@@ -52,10 +51,7 @@ public class GithubReleaseExtension {
 	{
 		task.setGroup("github-release");
 
-		String endpoint = REAL_ENDPOINT;
-		@Nullable String mockServerProp = System.getProperty("dev.enginecrafter77.githubrelease.mockServer");
-		if(Boolean.parseBoolean(mockServerProp))
-			endpoint = MOCK_ENDPOINT;
+		String endpoint = Optional.ofNullable(System.getProperty("dev.enginecrafter77.githubrelease.endpoint")).orElse(REAL_ENDPOINT);
 
 		Project project = task.getProject();
 		BuildArtifactContainer artifacts = this.evaluateArtifacts(project);
