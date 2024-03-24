@@ -25,6 +25,8 @@ import org.gradle.api.Project;
 import javax.annotation.Nonnull;
 
 public class GithubReleaseGradlePlugin implements Plugin<Project> {
+	public static final String GITHUB_API_ENDPOINT = "https://api.github.com";
+
 	@Override
 	public void apply(@Nonnull Project project)
 	{

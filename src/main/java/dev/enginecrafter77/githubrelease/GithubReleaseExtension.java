@@ -14,8 +14,6 @@ import java.util.Optional;
 @Getter
 @Setter
 public class GithubReleaseExtension {
-	private static final String REAL_ENDPOINT = "https://api.github.com";
-
 	public String repository;
 	public String token;
 
@@ -51,12 +49,10 @@ public class GithubReleaseExtension {
 	{
 		task.setGroup("github-release");
 
-		String endpoint = Optional.ofNullable(System.getProperty("dev.enginecrafter77.githubrelease.endpoint")).orElse(REAL_ENDPOINT);
-
 		Project project = task.getProject();
 		BuildArtifactContainer artifacts = this.evaluateArtifacts(project);
 
-		task.setEndpointUrl(endpoint);
+		Optional.ofNullable(System.getProperty("dev.enginecrafter77.githubrelease.endpoint")).ifPresent(task::setEndpointUrl);
 		task.setRepositoryUrl(this.getRepository());
 		task.setToken(this.getToken());
 		task.setArtifacts(artifacts);

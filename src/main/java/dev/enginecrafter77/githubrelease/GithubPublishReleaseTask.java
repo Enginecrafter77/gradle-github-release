@@ -44,6 +44,11 @@ public class GithubPublishReleaseTask extends DefaultTask {
 	@Input
 	private BuildArtifactContainer artifacts;
 
+	public GithubPublishReleaseTask()
+	{
+		this.endpointUrl = GithubReleaseGradlePlugin.GITHUB_API_ENDPOINT;
+	}
+
 	@Nonnull
 	private String getRepositoryName()
 	{
