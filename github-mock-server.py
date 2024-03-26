@@ -244,6 +244,7 @@ class GHRelease:
         return GHRelease(user, repo, rel_id, tag_name, name, message, commit, is_draft, is_prerelease)
 
 release_map = {}
+asset_map = {}
 
 @app.route("/repos/<user>/<repo>/releases", methods=['POST'])
 def e_release_create(user, repo):
@@ -287,18 +288,24 @@ def e_assets_upload(user, repo, rel_id):
     rel = release_map[rel_id]
     a_name = request.args['name']
     asset = rel.add_asset(a_name, request.headers['Content-Type'], len(request.data))
-
+    asset_map[asset.aid] = asset
     return asset.serialize()
 
-@app.route("/repos/<user>/<repo>/releases/<rel_id>/assets/<asset_id>", methods=['GET'])
-def e_asset_get(user, repo, rel_id, asset_id):
-    rel_id = int(rel_id)
+@app.route("/repos/<user>/<repo>/releases/assets/<asset_id>", methods=['PATCH'])
+def e_asset_label(user, repo, asset_id):
     asset_id = int(asset_id)
-    if not rel_id in release_map:
+    if not asset_id in asset_map:
         abort(404)
-    rel = release_map[rel_id]
-    asset = rel.assets[asset_id]
-    return asset.serialize()
+    args = request.get_json()
+    asset_map[asset_id].label = args['label']
+    return ""
+
+@app.route("/repos/<user>/<repo>/releases/assets/<asset_id>", methods=['GET'])
+def e_asset_get(user, repo, asset_id):
+    asset_id = int(asset_id)
+    if not asset_id in asset_map:
+        abort(404)
+    return asset_map[asset_id].serialize()
 
 if __name__ == "__main__":
-	app.run(debug=False)
+    app.run(debug=False)
