@@ -47,8 +47,8 @@ public class GithubReleaseGradlePlugin implements Plugin<Project> {
 
 		extension.getArtifacts().convention(project.provider(() -> {
 			BuildArtifactContainer container = project.getObjects().newInstance(BuildArtifactContainer.class);
-			Optional.ofNullable(project.getTasks().findByName("jar")).map(Jar.class::cast).ifPresent(container::fromJar);
-			Optional.ofNullable(project.getTasks().findByName("sourcesJar")).map(Jar.class::cast).ifPresent(container::fromJar);
+			Optional.ofNullable(project.getTasks().findByName("jar")).map(Jar.class::cast).ifPresent(container::from);
+			Optional.ofNullable(project.getTasks().findByName("sourcesJar")).map(Jar.class::cast).ifPresent(container::from);
 			return container;
 		}));
 

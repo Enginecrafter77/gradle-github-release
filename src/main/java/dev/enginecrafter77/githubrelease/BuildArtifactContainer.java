@@ -7,36 +7,59 @@ import org.gradle.api.file.RegularFile;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Zip;
-import org.gradle.internal.Actions;
 import org.gradle.util.ConfigureUtil;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 public abstract class BuildArtifactContainer {
 	private final ObjectFactory objectFactory;
-	private final ProviderFactory providerFactory;
 
 	@Inject
-	public BuildArtifactContainer(ObjectFactory objectFactory, ProviderFactory providerFactory)
+	public BuildArtifactContainer(ObjectFactory objectFactory)
 	{
 		this.objectFactory = objectFactory;
-		this.providerFactory = providerFactory;
 	}
 
 	@Nested
 	public abstract ListProperty<BuildArtifact> getArtifacts();
 
-	public void fromJar(Jar task, Action<? super BuildArtifact> configureAction)
+	public BuildArtifact artifact(Action<? super BuildArtifact> configureAction)
 	{
-		this.from((BuildArtifact artifact) -> {
+		BuildArtifact artifact = this.objectFactory.newInstance(BuildArtifact.class);
+		this.getArtifacts().add(artifact);
+		return artifact.with(configureAction);
+	}
+
+	public BuildArtifact from(AbstractArchiveTask task)
+	{
+		return this.artifact((BuildArtifact artifact) -> {
 			artifact.getFile().set(task.getArchiveFile());
-			artifact.getContentType().set("application/java-archive");
-			configureAction.execute(artifact);
+
+			@Nullable String contentType = this.getContentTypeFromTask(task);
+			if(contentType != null)
+				artifact.getContentType().set(contentType);
 		});
+	}
+
+	@Nullable
+	private String getContentTypeFromTask(AbstractArchiveTask task)
+	{
+		if(task instanceof Jar)
+			return "application/java-archive";
+		else if(task instanceof Zip)
+			return "application/zip";
+		else
+			return null;
+	}
+
+	public BuildArtifact from(Provider<RegularFile> file)
+	{
+		return this.artifact((BuildArtifact artifact) -> artifact.getFile().set(file));
 	}
 
 	@Deprecated
@@ -45,63 +68,38 @@ public abstract class BuildArtifactContainer {
 		this.fromJar(task, ConfigureUtil.configureUsing(closure));
 	}
 
-	public void fromJar(Jar task)
+	@Deprecated
+	public void fromJar(Jar task, Action<? super BuildArtifact> configureAction)
 	{
-		this.fromJar(task, Actions.doNothing());
-	}
-
-	public void fromZip(Zip task, Action<? super BuildArtifact> configureAction)
-	{
-		this.from((BuildArtifact artifact) -> {
-			artifact.getFile().set(task.getArchiveFile());
-			artifact.getContentType().set("application/zip");
-			configureAction.execute(artifact);
-		});
+		this.from(task).with(configureAction);
 	}
 
 	@Deprecated
 	public void fromZip(Zip task, @DelegatesTo(BuildArtifact.class) Closure<? super BuildArtifact> closure)
 	{
-		this.fromZip(task, ConfigureUtil.configureUsing(closure));
+		this.from(task).with(ConfigureUtil.configureUsing(closure));
 	}
 
-	public void fromZip(Zip task)
+	@Deprecated
+	public void fromZip(Zip task, Action<? super BuildArtifact> configureAction)
 	{
-		this.fromZip(task, Actions.doNothing());
-	}
-
-	public void fromFile(Provider<RegularFile> file, Action<? super BuildArtifact> configureAction)
-	{
-		this.from((BuildArtifact artifact) -> {
-			artifact.getFile().set(file);
-			configureAction.execute(artifact);
-		});
+		this.from(task).with(configureAction);
 	}
 
 	@Deprecated
 	public void fromFile(Provider<RegularFile> file, @DelegatesTo(BuildArtifact.class) Closure<? super BuildArtifact> closure)
 	{
-		this.fromFile(file, ConfigureUtil.configureUsing(closure));
+		this.from(file).with(ConfigureUtil.configureUsing(closure));
 	}
 
-	public void fromFile(Provider<RegularFile> file)
+	@Deprecated
+	public void fromFile(Provider<RegularFile> file, Action<? super BuildArtifact> configureAction)
 	{
-		this.fromFile(file, Actions.doNothing());
+		this.from(file).with(configureAction);
 	}
 
-	public void from(Action<? super BuildArtifact> action)
-	{
-		this.getArtifacts().add(this.providerFactory.provider(() -> {
-			BuildArtifact artifact = this.objectFactory.newInstance(BuildArtifact.class);
-			artifact.getName().convention(artifact.getFile().map((RegularFile file) -> file.getAsFile().getName()));
-			action.execute(artifact);
-			return artifact;
-		}));
-	}
-
-	public BuildArtifactContainer from(BuildArtifactContainer other)
+	public void set(BuildArtifactContainer other)
 	{
 		this.getArtifacts().set(other.getArtifacts());
-		return this;
 	}
 }

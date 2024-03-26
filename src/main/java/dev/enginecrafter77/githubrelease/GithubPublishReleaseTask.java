@@ -89,11 +89,7 @@ public abstract class GithubPublishReleaseTask extends DefaultTask {
 
 			try(InputStream input = Files.newInputStream(file.toPath()))
 			{
-				@Nullable String mimeType = artifact.getContentType().getOrNull();
-				if(mimeType == null)
-					mimeType = Files.probeContentType(file.toPath());
-				if(mimeType == null)
-					mimeType = "application/octet-stream";
+				String mimeType = artifact.getContentType().get();
 				GHAsset asset = release.uploadAsset(name, input, mimeType);
 				if(label != null)
 					asset.setLabel(label);

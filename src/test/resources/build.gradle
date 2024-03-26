@@ -18,9 +18,13 @@ github {
 	token = "some_token"
 	artifacts {
 		fromJar(jar) {
-			name = "version-${project.version}.jar"
+			name = "testjar.jar"
 		}
-		fromJar sourcesJar
+		from jar named "version-${project.version}.jar"
+		from sourcesJar
+		artifact {
+			file = jar.getArchiveFile()
+		}
 	}
 	release {
 		tag = "vX.Y.Z"
