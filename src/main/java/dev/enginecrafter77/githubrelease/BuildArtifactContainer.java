@@ -2,41 +2,45 @@ package dev.enginecrafter77.githubrelease;
 
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
-import lombok.Getter;
 import org.gradle.api.Action;
-import org.gradle.api.file.FileSystemLocation;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Zip;
 import org.gradle.internal.Actions;
 import org.gradle.util.ConfigureUtil;
 
-import javax.annotation.Nullable;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
+import javax.inject.Inject;
 
-@Getter
-public class BuildArtifactContainer {
-	private final List<BuildArtifact> artifacts;
+public abstract class BuildArtifactContainer {
+	private final ObjectFactory objectFactory;
+	private final ProviderFactory providerFactory;
 
-	public BuildArtifactContainer()
+	@Inject
+	public BuildArtifactContainer(ObjectFactory objectFactory, ProviderFactory providerFactory)
 	{
-		this.artifacts = new ArrayList<BuildArtifact>();
+		this.objectFactory = objectFactory;
+		this.providerFactory = providerFactory;
 	}
 
-	public void addArtifact(Supplier<File> file, @Nullable String type, @Nullable Object buildDependency, Action<? super BuildArtifactMetadata> configureAction)
+	@Nested
+	public abstract ListProperty<BuildArtifact> getArtifacts();
+
+	public void fromJar(Jar task, Action<? super BuildArtifact> configureAction)
 	{
-		this.artifacts.add(new BuildArtifact(configureAction, file, type, buildDependency));
+		this.from((BuildArtifact artifact) -> {
+			artifact.getFile().set(task.getArchiveFile());
+			artifact.getContentType().set("application/java-archive");
+			configureAction.execute(artifact);
+		});
 	}
 
-	@SuppressWarnings("deprecation")
-	public void fromJar(Jar task, Action<? super BuildArtifactMetadata> configureAction)
-	{
-		this.addArtifact(task::getArchivePath, "application/java-archive", task, configureAction);
-	}
-
-	public void fromJar(Jar task, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST) Closure<? super BuildArtifactMetadata> closure)
+	@Deprecated
+	public void fromJar(Jar task, @DelegatesTo(BuildArtifact.class) Closure<? super BuildArtifact> closure)
 	{
 		this.fromJar(task, ConfigureUtil.configureUsing(closure));
 	}
@@ -46,13 +50,17 @@ public class BuildArtifactContainer {
 		this.fromJar(task, Actions.doNothing());
 	}
 
-	@SuppressWarnings("deprecation")
-	public void fromZip(Zip task, Action<? super BuildArtifactMetadata> configureAction)
+	public void fromZip(Zip task, Action<? super BuildArtifact> configureAction)
 	{
-		this.addArtifact(task::getArchivePath, "application/zip", task, configureAction);
+		this.from((BuildArtifact artifact) -> {
+			artifact.getFile().set(task.getArchiveFile());
+			artifact.getContentType().set("application/zip");
+			configureAction.execute(artifact);
+		});
 	}
 
-	public void fromZip(Zip task, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
+	@Deprecated
+	public void fromZip(Zip task, @DelegatesTo(BuildArtifact.class) Closure<? super BuildArtifact> closure)
 	{
 		this.fromZip(task, ConfigureUtil.configureUsing(closure));
 	}
@@ -62,63 +70,38 @@ public class BuildArtifactContainer {
 		this.fromZip(task, Actions.doNothing());
 	}
 
-	public void fromTask(Object task, File file, Action<? super BuildArtifactMetadata> configureAction)
+	public void fromFile(Provider<RegularFile> file, Action<? super BuildArtifact> configureAction)
 	{
-		this.addArtifact(() -> file, null, task, configureAction);
+		this.from((BuildArtifact artifact) -> {
+			artifact.getFile().set(file);
+			configureAction.execute(artifact);
+		});
 	}
 
-	public void fromTask(Object task, File file, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
-	{
-		this.fromTask(task, file, ConfigureUtil.configureUsing(closure));
-	}
-
-	public void fromTask(Object task, File file)
-	{
-		this.fromTask(task, file, Actions.doNothing());
-	}
-
-	public void fromFile(File file, Action<? super BuildArtifactMetadata> configureAction)
-	{
-		this.addArtifact(() -> file, null, null, configureAction);
-	}
-
-	public void fromFile(File file, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
+	@Deprecated
+	public void fromFile(Provider<RegularFile> file, @DelegatesTo(BuildArtifact.class) Closure<? super BuildArtifact> closure)
 	{
 		this.fromFile(file, ConfigureUtil.configureUsing(closure));
 	}
 
-	public void fromFile(File file)
+	public void fromFile(Provider<RegularFile> file)
 	{
 		this.fromFile(file, Actions.doNothing());
 	}
 
-	public void fromFile(FileSystemLocation file, Action<? super BuildArtifactMetadata> configureAction)
+	public void from(Action<? super BuildArtifact> action)
 	{
-		this.fromFile(file.getAsFile(), configureAction);
+		this.getArtifacts().add(this.providerFactory.provider(() -> {
+			BuildArtifact artifact = this.objectFactory.newInstance(BuildArtifact.class);
+			artifact.getName().convention(artifact.getFile().map((RegularFile file) -> file.getAsFile().getName()));
+			action.execute(artifact);
+			return artifact;
+		}));
 	}
 
-	public void fromFile(FileSystemLocation file, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
+	public BuildArtifactContainer from(BuildArtifactContainer other)
 	{
-		this.fromFile(file.getAsFile(), closure);
-	}
-
-	public void fromFile(FileSystemLocation file)
-	{
-		this.fromFile(file, Actions.doNothing());
-	}
-
-	public void fromFile(String file, Action<? super BuildArtifactMetadata> action)
-	{
-		this.fromFile(new File(file), action);
-	}
-
-	public void fromFile(String file, @DelegatesTo(value = BuildArtifactMetadata.class, strategy = Closure.DELEGATE_FIRST)Closure<? super BuildArtifactMetadata> closure)
-	{
-		this.fromFile(new File(file), closure);
-	}
-
-	public void fromFile(String file)
-	{
-		this.fromFile(file, Actions.doNothing());
+		this.getArtifacts().set(other.getArtifacts());
+		return this;
 	}
 }

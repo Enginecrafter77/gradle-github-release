@@ -1,30 +1,24 @@
 package dev.enginecrafter77.githubrelease;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.gradle.api.Action;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.Optional;
 
-import javax.annotation.Nullable;
-import java.io.File;
-import java.util.function.Supplier;
+public abstract class BuildArtifact {
+	@InputFile
+	public abstract RegularFileProperty getFile();
 
-@AllArgsConstructor
-public class BuildArtifact {
-	private final Action<? super BuildArtifactMetadata> metadataConfig;
+	@Input
+	@Optional
+	public abstract Property<String> getContentType();
 
-	@Getter
-	private final Supplier<File> artifactFileProvider;
+	@Input
+	@Optional
+	public abstract Property<String> getName();
 
-	@Getter
-	@Nullable
-	private final String contentType;
-
-	@Getter
-	@Nullable
-	private final Object buildDependency;
-
-	public void configureMetadata(BuildArtifactMetadata metadata)
-	{
-		this.metadataConfig.execute(metadata);
-	}
+	@Input
+	@Optional
+	public abstract Property<String> getLabel();
 }

@@ -1,145 +1,95 @@
 package dev.enginecrafter77.githubrelease;
 
-import groovy.lang.Closure;
-import groovy.lang.DelegatesTo;
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.util.ConfigureUtil;
 import org.kohsuke.github.*;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Collection;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-@Getter
-@Setter
-public class GithubPublishReleaseTask extends DefaultTask {
+public abstract class GithubPublishReleaseTask extends DefaultTask {
 	private static final Pattern REPO_URL_REGEX = Pattern.compile("^https?://(?:www.)?github.com/([^/]+/[^/.]+)(?:.git)?$");
-
-	@Input
-	public String endpointUrl;
-
-	@Input
-	public String repositoryUrl;
-
-	@Input
-	public String token;
-
-	@Input
-	public Object releaseData;
-
-	@Input
-	private BuildArtifactContainer artifacts;
 
 	public GithubPublishReleaseTask()
 	{
-		this.endpointUrl = GithubReleaseGradlePlugin.GITHUB_API_ENDPOINT;
+		this.getEndpointUrl().convention(GithubReleaseGradlePlugin.GITHUB_API_ENDPOINT);
 	}
 
-	@Nonnull
-	private String getRepositoryName()
-	{
-		Matcher matcher = REPO_URL_REGEX.matcher(this.repositoryUrl);
-		if(!matcher.matches())
-			throw new IllegalArgumentException("Repository URL does not match the regex!");
-		return matcher.group(1);
-	}
+	@Input
+	public abstract Property<String> getEndpointUrl();
 
-	public void setArtifacts(BuildArtifactContainer artifacts)
-	{
-		this.artifacts = artifacts;
-		this.reloadDependencies();
-	}
+	@Input
+	public abstract Property<String> getRepositoryUrl();
 
-	public void artifacts(@DelegatesTo(value = BuildArtifactContainer.class, strategy = Closure.DELEGATE_FIRST) Closure<? super BuildArtifactContainer> closure)
-	{
-		this.artifacts = new BuildArtifactContainer();
-		closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-		closure.setDelegate(this.artifacts);
-		closure.call();
-		this.reloadDependencies();
-	}
+	@Input
+	public abstract Property<String> getToken();
 
-	private void reloadDependencies()
-	{
-		this.setDependsOn(this.artifacts.getArtifacts().stream().map(BuildArtifact::getBuildDependency).filter(Objects::nonNull).collect(Collectors.toList()));
-	}
+	@Nested
+	public abstract GithubReleaseData getRelease();
 
-	public void release(@DelegatesTo(value = GithubReleaseData.class, strategy = Closure.DELEGATE_FIRST) Closure<? super GithubReleaseData> closure)
-	{
-		this.release(ConfigureUtil.configureUsing(closure));
-	}
+	@Nested
+	public abstract BuildArtifactContainer getArtifacts();
 
 	public void release(Action<? super GithubReleaseData> action)
 	{
-		this.releaseData = action;
+		action.execute(this.getRelease());
 	}
 
-	private GithubReleaseData evaluateReleaseData()
+	public void artifacts(Action<? super BuildArtifactContainer> action)
 	{
-		if(this.releaseData instanceof GithubReleaseData)
-		{
-			return (GithubReleaseData)this.releaseData;
-		}
+		action.execute(this.getArtifacts());
+	}
 
-		if(this.releaseData instanceof Action)
-		{
-			@SuppressWarnings("unchecked") Action<? super GithubReleaseData> action = (Action<? super GithubReleaseData>)this.releaseData;
-			GithubReleaseData data = new GithubReleaseData(this.getProject());
-			action.execute(data);
-			return data;
-		}
-
-		throw new UnsupportedOperationException("releaseData is neither GithubReleaseData instance nor Closure!");
+	@Internal
+	public Provider<String> getRepository()
+	{
+		return this.getRepositoryUrl().map((String url) -> {
+			Matcher matcher = REPO_URL_REGEX.matcher(url);
+			if(!matcher.matches())
+				throw new IllegalArgumentException("Repository URL does not match the regex!");
+			return matcher.group(1);
+		});
 	}
 
 	@TaskAction
 	public void run() throws Exception
 	{
-		Collection<BuildArtifact> artifacts = this.artifacts.getArtifacts();
-		GithubReleaseData releaseData = this.evaluateReleaseData();
+		Collection<BuildArtifact> artifacts = this.getArtifacts().getArtifacts().get();
+		GithubReleaseData releaseData = this.getRelease();
 
-		GitHub github = (new GitHubBuilder()).withEndpoint(this.endpointUrl).withOAuthToken(this.token).build();
-		GHRepository repository = github.getRepository(this.getRepositoryName());
+		GitHub github = (new GitHubBuilder()).withEndpoint(this.getEndpointUrl().get()).withOAuthToken(this.getToken().get()).build();
+		GHRepository repository = github.getRepository(this.getRepository().get());
 
 		//Github API requires the message to use CRLF line endings.
 		//noinspection deprecation
-		GHRelease release = repository.createRelease(releaseData.tag)
-				.name(StringEscapeUtils.escapeJson(releaseData.name))
-				.body(StringEscapeUtils.escapeJson(releaseData.message.replace("\n", "\r\n")))
-				.prerelease(releaseData.preRelease)
-				.draft(releaseData.draft)
+		GHRelease release = repository.createRelease(releaseData.getTag().get())
+				.name(StringEscapeUtils.escapeJson(releaseData.getName().get()))
+				.body(StringEscapeUtils.escapeJson(releaseData.getMessage().get().replace("\n", "\r\n")))
+				.prerelease(releaseData.getPreRelease().get())
+				.draft(releaseData.getDraft().get())
 				.create();
 
-		BuildArtifactMetadata metadata = new BuildArtifactMetadata();
 		for(BuildArtifact artifact : artifacts)
 		{
-			// Reset to default values
-			metadata.label = null;
-			metadata.name = null;
-
-			artifact.configureMetadata(metadata);
-
-			File file = artifact.getArtifactFileProvider().get();
-			String name = Optional.ofNullable(metadata.getName()).orElseGet(file::getName);
-			@Nullable String label = metadata.getLabel();
+			File file = artifact.getFile().getAsFile().get();
+			String name = artifact.getName().get();
+			@Nullable String label = artifact.getLabel().getOrNull();
 
 			try(InputStream input = Files.newInputStream(file.toPath()))
 			{
-				@Nullable String mimeType = artifact.getContentType();
+				@Nullable String mimeType = artifact.getContentType().getOrNull();
 				if(mimeType == null)
 					mimeType = Files.probeContentType(file.toPath());
 				if(mimeType == null)
