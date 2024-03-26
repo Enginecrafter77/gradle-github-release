@@ -73,6 +73,6 @@ public class GithubReleaseExtension {
 		task.getRepositoryUrl().set(this.getRepository());
 		task.getToken().set(this.getToken());
 		task.getArtifacts().set(this.artifacts);
-		task.getRelease().from(this.release);
+		task.getRelease().set(this.release);
 	}
 }

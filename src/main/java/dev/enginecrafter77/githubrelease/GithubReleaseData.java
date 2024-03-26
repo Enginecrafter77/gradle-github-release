@@ -82,7 +82,7 @@ public abstract class GithubReleaseData {
 		return info;
 	}
 
-	public GithubReleaseData from(GithubReleaseData other)
+	public GithubReleaseData set(GithubReleaseData other)
 	{
 		this.getTag().set(other.getTag());
 		this.getName().set(other.getName());
