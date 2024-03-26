@@ -14,6 +14,7 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.util.List;
 
 public abstract class GithubReleaseData {
@@ -54,17 +55,27 @@ public abstract class GithubReleaseData {
 		this.useLatestTag(this.projectLayout.getProjectDirectory());
 	}
 
+	public void useLatestTag(File file)
+	{
+		this.useLatestTag(this.projectLayout.dir(this.providerFactory.provider(() -> file)));
+	}
+
 	public void useLatestTag(Directory directory)
 	{
-		Provider<GitTagInfo> tagInfoProvider = this.providerFactory.provider(() -> this.queryTag(directory));
+		this.useLatestTag(this.providerFactory.provider(() -> directory));
+	}
+
+	public void useLatestTag(Provider<Directory> directory)
+	{
+		Provider<GitTagInfo> tagInfoProvider = directory.map(Directory::getAsFile).map(this::queryTag);
 		this.getTag().set(tagInfoProvider.map(GitTagInfo::getName));
 		this.getMessage().set(tagInfoProvider.map(GitTagInfo::getFullMessage));
 	}
 
-	private GitTagInfo queryTag(Directory directory)
+	private GitTagInfo queryTag(File gitDirectory)
 	{
 		GitTagInfo info = new GitTagInfo();
-		try(Git git = Git.open(directory.getAsFile()))
+		try(Git git = Git.open(gitDirectory))
 		{
 			List<Ref> tags = git.tagList().call();
 			Ref latestTag = tags.get(tags.size() - 1);
