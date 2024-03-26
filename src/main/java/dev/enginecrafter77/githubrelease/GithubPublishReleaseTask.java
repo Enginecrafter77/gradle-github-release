@@ -11,7 +11,6 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.kohsuke.github.*;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -85,14 +84,12 @@ public abstract class GithubPublishReleaseTask extends DefaultTask {
 		{
 			File file = artifact.getFile().getAsFile().get();
 			String name = artifact.getName().get();
-			@Nullable String label = artifact.getLabel().getOrNull();
-
 			try(InputStream input = Files.newInputStream(file.toPath()))
 			{
 				String mimeType = artifact.getContentType().get();
 				GHAsset asset = release.uploadAsset(name, input, mimeType);
-				if(label != null)
-					asset.setLabel(label);
+				if(artifact.getLabel().isPresent())
+					asset.setLabel(artifact.getLabel().get());
 			}
 		}
 	}
