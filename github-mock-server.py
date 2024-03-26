@@ -254,6 +254,9 @@ def e_release_create(user, repo):
 
     rel = GHRelease.from_json(user, repo, rel_id, data)
     release_map[rel_id] = rel
+
+    print(f"REL {rel.tag} / {rel.name} : {rel.message}")
+
     return rel.serialize()
 
 @app.route("/repos/<user>/<repo>/releases", methods=['GET'])
