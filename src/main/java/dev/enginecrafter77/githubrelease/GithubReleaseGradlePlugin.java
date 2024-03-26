@@ -38,20 +38,14 @@ public class GithubReleaseGradlePlugin implements Plugin<Project> {
 			task.dependsOn("defaultGithubRelease");
 		});
 		project.getTasks().register("defaultGithubRelease", GithubPublishReleaseTask.class, this::configureDefaultReleaseTask);
-		project.beforeEvaluate(this::extensionConventions);
-	}
 
-	protected void extensionConventions(Project project)
-	{
 		GithubReleaseExtension extension = project.getExtensions().getByType(GithubReleaseExtension.class);
-
 		extension.getArtifacts().convention(project.provider(() -> {
 			BuildArtifactContainer container = project.getObjects().newInstance(BuildArtifactContainer.class);
 			Optional.ofNullable(project.getTasks().findByName("jar")).map(Jar.class::cast).ifPresent(container::from);
 			Optional.ofNullable(project.getTasks().findByName("sourcesJar")).map(Jar.class::cast).ifPresent(container::from);
 			return container;
 		}));
-
 		extension.getRelease().convention(project.provider(() -> {
 			GithubReleaseData data = project.getObjects().newInstance(GithubReleaseData.class);
 			data.useLatestTag();
