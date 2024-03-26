@@ -8,7 +8,6 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
 @Getter
@@ -16,15 +15,14 @@ public class GithubReleaseExtension {
 	private final ProviderFactory providerFactory;
 	private final ObjectFactory objectFactory;
 
-	@Nonnull
-	private final Property<BuildArtifactContainer> artifacts;
-
-	@Nonnull
-	private final Property<GithubReleaseData> release;
+	public final BuildArtifactContainer artifacts;
+	public final GithubReleaseData release;
 
 	public final Property<String> repository;
-
 	public final Property<String> token;
+
+	private boolean artifactsConfigured;
+	private boolean releaseConfigured;
 
 	@Inject
 	public GithubReleaseExtension(ProviderFactory providerFactory, ObjectFactory objectFactory, ProjectLayout projectLayout)
@@ -33,13 +31,11 @@ public class GithubReleaseExtension {
 		this.objectFactory = objectFactory;
 		this.repository = objectFactory.property(String.class);
 		this.token = objectFactory.property(String.class);
-		this.artifacts = objectFactory.property(BuildArtifactContainer.class);
-		this.release = objectFactory.property(GithubReleaseData.class);
-	}
+		this.artifacts = objectFactory.newInstance(BuildArtifactContainer.class);
+		this.release = objectFactory.newInstance(GithubReleaseData.class);
 
-	public void release(Action<? super GithubReleaseData> action)
-	{
-		this.release.set(ConfigureObject.with(this.objectFactory, this.providerFactory).configureProvider(GithubReleaseData.class, action));
+		this.artifactsConfigured = false;
+		this.releaseConfigured = false;
 	}
 
 	public void setToken(String token)
@@ -54,7 +50,15 @@ public class GithubReleaseExtension {
 
 	public void artifacts(Action<? super BuildArtifactContainer> action)
 	{
-		this.artifacts.set(ConfigureObject.with(this.objectFactory, this.providerFactory).configureProvider(BuildArtifactContainer.class, action));
+		this.artifacts.empty();
+		action.execute(this.artifacts);
+		this.artifactsConfigured = true;
+	}
+
+	public void release(Action<? super GithubReleaseData> action)
+	{
+		action.execute(this.release);
+		this.releaseConfigured = true;
 	}
 
 	private Provider<String> getEndpointUrl()
@@ -68,7 +72,7 @@ public class GithubReleaseExtension {
 		task.getEndpointUrl().set(this.getEndpointUrl());
 		task.getRepositoryUrl().set(this.getRepository());
 		task.getToken().set(this.getToken());
-		task.getArtifacts().set(this.artifacts.get());
-		task.getRelease().from(this.release.get());
+		task.getArtifacts().set(this.artifacts);
+		task.getRelease().from(this.release);
 	}
 }

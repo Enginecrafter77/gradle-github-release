@@ -21,10 +21,8 @@ package dev.enginecrafter77.githubrelease;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.tasks.bundling.Jar;
 
 import javax.annotation.Nonnull;
-import java.util.Optional;
 
 public class GithubReleaseGradlePlugin implements Plugin<Project> {
 	public static final String GITHUB_API_ENDPOINT = "https://api.github.com";
@@ -38,19 +36,22 @@ public class GithubReleaseGradlePlugin implements Plugin<Project> {
 			task.dependsOn("defaultGithubRelease");
 		});
 		project.getTasks().register("defaultGithubRelease", GithubPublishReleaseTask.class, this::configureDefaultReleaseTask);
+		project.afterEvaluate(this::configureExtensionDefaults);
+	}
 
+	protected void configureExtensionDefaults(Project project)
+	{
 		GithubReleaseExtension extension = project.getExtensions().getByType(GithubReleaseExtension.class);
-		extension.getArtifacts().convention(project.provider(() -> {
-			BuildArtifactContainer container = project.getObjects().newInstance(BuildArtifactContainer.class);
-			Optional.ofNullable(project.getTasks().findByName("jar")).map(Jar.class::cast).ifPresent(container::from);
-			Optional.ofNullable(project.getTasks().findByName("sourcesJar")).map(Jar.class::cast).ifPresent(container::from);
-			return container;
-		}));
-		extension.getRelease().convention(project.provider(() -> {
-			GithubReleaseData data = project.getObjects().newInstance(GithubReleaseData.class);
-			data.useLatestTag();
-			return data;
-		}));
+		if(!extension.isArtifactsConfigured())
+		{
+			extension.artifacts((BuildArtifactContainer container) -> {
+				container.from(project.getTasks().named("jar"));
+				container.from(project.getTasks().named("sourcesJar"));
+			});
+		}
+
+		if(!extension.isReleaseConfigured())
+			extension.release(GithubReleaseData::useLatestTag);
 	}
 
 	protected void configureDefaultReleaseTask(GithubPublishReleaseTask task)
