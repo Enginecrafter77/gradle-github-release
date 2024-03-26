@@ -35,7 +35,8 @@ github {
 	repository = "https://github.com/user/repo.git"
 	token = "ghb_xxxxxxxxxxxxxxxxxxx"
 	artifacts {
-		fromJar jar
+		from jar
+        from sourcesJar
 	}
 	release {
 		useLatestTag()
@@ -58,19 +59,18 @@ release information to use.
 ```groovy
 release {
 	tag = "vX.Y.Z" // The tag to create the release on
-	name = "Release XYZ" // The release title
+	name = "Release XYZ" // The release title, optional, default: same as tag
 	message = "Release message\n\nA new line example" // The release body
-	draft = false
-	preRelease = false
+	draft = false // optional, default: false
+	preRelease = false // optional, default: false
 }
 ```
 
 On the other hand, you can use `useLatestTag()` method.
 This method looks into the git repository located in the root project directory
-to locate the latest annotated git tag. The tag and name
-properties are set to the annotated tag's name, and the
-tag's message is copied into the message property.
-The draft and preRelease properties are set to false.
+to locate the latest annotated git tag. The tag property is set to
+the annotated tag's name, and the tag's message is copied
+into the message property.
 ```groovy
 release {
 	useLatestTag()
@@ -90,48 +90,76 @@ release {
 One may wish to publish artifacts other than the main JAR.
 In such cases, artifacts offers a few more options.
 
-In this example, we can include any JAR built by Jar type tasks.
+The easiest way is using the `from` method. This method takes 1
+task argument. The task should specify exactly 1 output file, which
+will be uploaded as the artifact.
 ```groovy
 artifacts {
-	fromJar <jar-task>
+	from jar
 }
 ```
 
-Similarly, we can include a zip file built by a Zip type task.
+The artifact can be further customized as such:
 ```groovy
 artifacts {
-	fromZip <jar-task>
+	from jar with {
+        name = "artifact-name.jar"
+        label = "some label" // optional
+    }
 }
 ```
 
-This notation allows you to include any file specified
-by the file argument built by task specified by the task argument.
+Or, using the shorthand form:
 ```groovy
 artifacts {
-	fromTask <task>, <file>
+	from jar named "artifact-name.jar" labeled "some label"
 }
 ```
 
-This option allows you to include any file which is not built by a task.
-The use cases for this method are limited, but it was included nonetheless.
-```groovy
-artifacts {
-	fromFile <file>
-}
-```
-
-### Artifact options
 By default, the artifacts use the filename of
 the file as the name of the uploaded asset. While
 this is desirable in most cases, you can customize
-it for each artifact. Additionally, you can specify
-the optional label option for the artifact.
+it for each artifact.
 
+If you want to manually specify an artifact, use the following:
 ```groovy
 artifacts {
-	fromJar(jar) {
-		name = "some-jar-${version}.jar"
-		label = "Optional label"
+    artifact {
+        file = (Provider<RegularFile>)provider
+        contentType = "application/octet-stream" // optional
+        name = "file-name.txt" // optional, same as filename if left unset
+        label = "some label" // optional
+    }
+}
+```
+Please note that this approach is intented for advanced users who know what
+`Provider<RegularFile>` is. The behavior of this approach is generally unknown.
+
+## Lazy Evaluation
+All the closures are evaluated during configure time, and as such
+certain options are not yet known. An example of such case would be
+a project using a plugin which sets `project.version` according to
+the local git repository info in `afterEvaluate` method. Thus, a configuration
+like this probably won't work as expected.
+```groovy
+artifacts {
+	from jar named "artifact-name-${project.version}.jar"
+}
+```
+
+To achieve the desired result, use the gradle `Property` system.
+
+```groovy
+def githubArtifactNameProperty = objects.property(String)
+
+afterEvaluate {
+    // project.version is now set
+    githubArtifactNameProperty.set("artifact-name-${project.version}.jar")
+}
+
+github {
+	artifacts {
+		from jar named githubArtifactNameProperty
 	}
 }
 ```
@@ -181,7 +209,11 @@ tasks.register("task-name", dev.enginecrafter77.githubrelease.GithubPublishRelea
 		preRelease = false
 	}
 	artifacts {
-		fromJar jar
+		from jar with {
+			name = "artifact-name.jar"
+			label = "some label" // optional
+		}
+		from sourcesJar
 	}
 }
 ```
